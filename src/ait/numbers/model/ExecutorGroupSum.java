@@ -15,7 +15,7 @@ public class ExecutorGroupSum extends GroupSum {
     public int computeSum() {
         int numGroup = numberGroups.length;
         int sum = 0;
-        ExecutorService executorService = Executors.newFixedThreadPool(numGroup);
+        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         List<Future<Integer>> futures = new ArrayList<>();
 
         for (int i = 0; i < numGroup; i++) {
@@ -37,7 +37,6 @@ public class ExecutorGroupSum extends GroupSum {
                 e.printStackTrace();
             }
         }
-        // TODO Homework
         return -sum;
     }
 }

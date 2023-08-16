@@ -40,12 +40,10 @@ public class ThreadGroupSum extends GroupSum {
             threads[i] = new Thread(task);
             threads[i].start();
         }
-
         for (int i = 0; i < numThreads; i++) {
             try {
                 threads[i].join();
             } catch (InterruptedException e) {
-                // Handle InterruptedException
                 e.printStackTrace();
             }
         }
