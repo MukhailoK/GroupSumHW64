@@ -10,34 +10,26 @@ public class ThreadGroupSum extends GroupSum {
     @Override
     public int computeSum() {
         int numGroups = numberGroups.length;
-        int numThreads = Runtime.getRuntime().availableProcessors();
+        int numThreads = 8;
 
-        var ref = new Object() {
-            int sum = 0;
-        };
-
+        AtomicInteger sum = new AtomicInteger();
         Thread[] threads = new Thread[numThreads];
-        AtomicInteger threadIndex = new AtomicInteger(0);
-
-        Runnable task = () -> {
-            int currentIndex = threadIndex.getAndIncrement();
-            int threadSum = 0;
-            int groupsPerThread = (int) Math.ceil((double) numGroups / numThreads);
-            int startGroup = currentIndex * groupsPerThread;
-            int endGroup = Math.min((currentIndex + 1) * groupsPerThread, numGroups);
-
-            for (int i = startGroup; i < endGroup; i++) {
-                for (int num : numberGroups[i]) {
-                    threadSum += num;
-                }
-            }
-            synchronized (this) {
-                ref.sum += threadSum;
-            }
-        };
 
         for (int i = 0; i < numThreads; i++) {
-            threads[i] = new Thread(task);
+            int index = i;
+            threads[i] = new Thread(() -> {
+                int threadSum = 0;
+                int groupsPerThread = (int) Math.ceil((double) numGroups / numThreads);
+                int startGroup = index * groupsPerThread;
+                int endGroup = Math.min((index + 1) * groupsPerThread, numGroups);
+
+                for (int j = startGroup; j < endGroup; j++) {
+                    for (int num : numberGroups[j]) {
+                        threadSum += num;
+                    }
+                }
+                sum.addAndGet(threadSum);
+            });
             threads[i].start();
         }
         for (int i = 0; i < numThreads; i++) {
@@ -47,7 +39,6 @@ public class ThreadGroupSum extends GroupSum {
                 e.printStackTrace();
             }
         }
-
-        return ref.sum;
+        return sum.get();
     }
 }

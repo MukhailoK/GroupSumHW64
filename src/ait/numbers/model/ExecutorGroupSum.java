@@ -1,10 +1,9 @@
 package ait.numbers.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ExecutorGroupSum extends GroupSum {
     public ExecutorGroupSum(int[][] numberGroups) {
@@ -13,30 +12,16 @@ public class ExecutorGroupSum extends GroupSum {
 
     @Override
     public int computeSum() {
-        int numGroup = numberGroups.length;
-        int sum = 0;
-        ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        List<Future<Integer>> futures = new ArrayList<>();
+        AtomicInteger sum = new AtomicInteger();
+        ExecutorService executor = Executors.newFixedThreadPool(8);
 
-        for (int i = 0; i < numGroup; i++) {
-            final int groupIndex = i;
-            Future<Integer> future = executorService.submit(() -> {
-                int groupSum = 0;
-                for (int num : numberGroups[groupIndex]) {
-                    groupSum -= num;
-                }
-                return groupSum;
-            });
-            futures.add(future);
+        for (int i = 0; i < numberGroups.length; i++) {
+            int groupIndex = i;
+            executor.execute(() -> sum.addAndGet(Arrays.stream(numberGroups[groupIndex]).sum()));
         }
-        executorService.shutdown();
-        for (Future<Integer> future : futures) {
-            try {
-                sum += future.get();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        while (!executor.isTerminated()) {
+            executor.shutdown();
         }
-        return -sum;
+        return sum.get();
     }
 }
